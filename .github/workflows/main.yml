@@ -19,5 +19,21 @@ jobs:
         with:
           node-version: '20'  # Specify the Node.js version you are using
 
-      - name: Install react-theme-switch-animation
-        run: npm install react-theme-switch-animation
+      - name: Install dependencies and initialize Next.js project
+        run: |
+          # Initialize a new Next.js project if it does not exist
+          if [ ! -d "my-nextjs-app" ]; then
+            npx create-next-app@latest my-nextjs-app --use-npm --no-tailwind --no-eslint --no-src-dir --no-experimental-app --ts --no-import-alias
+          fi
+          cd my-nextjs-app
+          npm install react-theme-switch-animation
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "Initialize Next.js project and install react-theme-switch-animation"
+          git push origin HEAD
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
