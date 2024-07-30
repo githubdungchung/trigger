@@ -31,8 +31,8 @@ jobs:
       - name: Commit and push changes
         run: |
           cd my-nextjs-app
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.name 'githubdungchung'
+          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add .
           git commit -m "Initialize Next.js project and install react-theme-switch-animation"
           git remote set-url origin https://github-actions:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git
