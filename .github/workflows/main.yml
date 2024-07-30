@@ -31,6 +31,11 @@ jobs:
           cd my-nextjs-app
           npm install react-theme-switch-animation
 
+      - name: Create or modify a file to ensure changes
+        run: |
+          cd my-nextjs-app
+          echo "// Added by GitHub Actions" >> README.md
+
       - name: Commit and push changes
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
