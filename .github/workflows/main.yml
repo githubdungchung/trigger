@@ -21,13 +21,3 @@ jobs:
 
       - name: Install react-theme-switch-animation
         run: npm install react-theme-switch-animation
-
-      - name: Commit changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
-          git commit -m 'Auto install react-theme-switch-animation'
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
