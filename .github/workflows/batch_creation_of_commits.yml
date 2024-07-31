@@ -1,0 +1,44 @@
+name: batch creation of commits
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # Runs every 5 minutes
+
+jobs:
+  create-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PAT }}
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'githubdungchung'
+        git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+
+    - name: Create and run Python script
+      run: |
+        echo "import subprocess" > create_commits.py
+        echo "def create_commits(batch_size, total_commits):" >> create_commits.py
+        echo "    subprocess.run(['git', 'config', '--global', 'user.name', 'githubdungchung'])" >> create_commits.py
+        echo "    subprocess.run(['git', 'config', '--global', 'user.email', '165872053+githubdungchung@users.noreply.github.com'])" >> create_commits.py
+        echo "    for batch in range(0, total_commits, batch_size):" >> create_commits.py
+        echo "        for _ in range(batch_size):" >> create_commits.py
+        echo "            subprocess.run(['git', 'commit', '--allow-empty', '-m', 'Empty commit'])" >> create_commits.py
+        echo "        subprocess.run(['git', 'pull', '--rebase'])" >> create_commits.py
+        echo "        subprocess.run(['git', 'push', '-f', 'https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git', 'HEAD:main'])" >> create_commits.py
+        echo "if __name__ == '__main__':" >> create_commits.py
+        echo "    create_commits(batch_size=100, total_commits=10000)" >> create_commits.py  # Adjust batch_size and total_commits as needed
+
+    - name: Run create_commits.py
+      run: python create_commits.py
