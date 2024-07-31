@@ -13,14 +13,19 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Create 1000000 empty commits
+    - name: Set up Git
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        
+
+    - name: Create 1000000 empty commits
+      run: |
         for i in {1..1000000}
         do
           git commit --allow-empty -m "Empty commit $i"
         done
-        
-        git push origin HEAD:main
+
+    - name: Push changes
+      run: |
+        git pull --rebase
+        git push -f origin HEAD:main
