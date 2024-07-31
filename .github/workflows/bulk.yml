@@ -23,8 +23,8 @@ jobs:
       - name: Create multiple projects
         run: |
           for i in {1..10}; do
-            TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-            PROJECT_DIR="nextjs-project-$TIMESTAMP-$i"
+            TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
+            PROJECT_DIR="$TIMESTAMP"
             
             # Create Next.js project
             npx create-next-app@latest $PROJECT_DIR --use-npm --no-tailwind --no-eslint --no-src-dir --no-experimental-app --ts --no-import-alias
@@ -43,4 +43,5 @@ jobs:
             git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
 
             cd ..
+            sleep 1  # Ensure the next timestamp is unique
           done
