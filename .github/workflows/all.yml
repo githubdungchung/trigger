@@ -11,6 +11,10 @@ jobs:
   install-packages:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up environment variables
+        id: vars
+        run: echo "PROJECT_DIR=nextjs-project-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -22,27 +26,27 @@ jobs:
 
       - name: Install dependencies and initialize Next.js project
         run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          PROJECT_DIR="nextjs-project-$TIMESTAMP"
           npx create-next-app@latest $PROJECT_DIR --use-npm --no-tailwind --no-eslint --no-src-dir --no-experimental-app --ts --no-import-alias
           cd $PROJECT_DIR
           npm install react-theme-switch-animation
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
 
       - name: Create or modify a file to ensure changes
         run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          PROJECT_DIR="nextjs-project-$TIMESTAMP"
           cd $PROJECT_DIR
           echo "// Added by GitHub Actions" >> README.md
+        env:
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
 
       - name: Commit and push changes
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
+          PROJECT_DIR: ${{ env.PROJECT_DIR }}
         run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          PROJECT_DIR="nextjs-project-$TIMESTAMP"
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+          cd $PROJECT_DIR
           git add .
           git commit -m "Initialize Next.js project and install react-theme-switch-animation for $PROJECT_DIR"
           git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
