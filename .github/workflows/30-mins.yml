@@ -1,4 +1,4 @@
-name: Install React Theme Switch Animation
+name: 30 min
 
 on:
   workflow_dispatch:
