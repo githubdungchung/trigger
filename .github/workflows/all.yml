@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Set up environment variables
         id: vars
-        run: echo "PROJECT_DIR=nextjs-project-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+        run: echo "PROJECT_DIR=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
