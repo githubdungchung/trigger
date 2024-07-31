@@ -42,10 +42,13 @@ jobs:
       - name: Install dependencies and modify files
         run: |
           for project in nextjs-project-*; do
-            cd $project
-            npm install react-theme-switch-animation
-            echo "// Added by GitHub Actions" >> README.md
-            cd ..
+            if [ -d "$project" ]; then
+              cd $project
+              npm install react-theme-switch-animation
+              echo "// Added by GitHub Actions" >> README.md
+              cd ..
+            fi
+          done
             
       - name: Commit and push changes
         env:
