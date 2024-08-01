@@ -26,14 +26,9 @@ jobs:
       run: |
         echo "import os" > create_commits.py
         echo "import subprocess" >> create_commits.py
-        echo "def get_last_commit_index(file_path):" >> create_commits.py
-        echo "    if os.path.exists(file_path):" >> create_commits.py
-        echo "        with open(file_path, 'r') as file:" >> create_commits.py
-        echo "            return int(file.read().strip())" >> create_commits.py
-        echo "    return 0" >> create_commits.py
-        echo "def save_last_commit_index(file_path, index):" >> create_commits.py
-        echo "    with open(file_path, 'w') as file:" >> create_commits.py
-        echo "        file.write(str(index))" >> create_commits.py
+        echo "def get_commit_count():" >> create_commits.py
+        echo "    result = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], stdout=subprocess.PIPE)" >> create_commits.py
+        echo "    return int(result.stdout.strip())" >> create_commits.py
         echo "def create_commits(number_of_commits, start_index):" >> create_commits.py
         echo "    batch_size = 100" >> create_commits.py
         echo "    current_index = start_index" >> create_commits.py
@@ -49,19 +44,11 @@ jobs:
         echo "        subprocess.run(['git', 'push', 'https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git', 'HEAD:main'])" >> create_commits.py
         echo "    return current_index" >> create_commits.py
         echo "if __name__ == '__main__':" >> create_commits.py
-        echo "    file_path = 'last_commit_index.txt'" >> create_commits.py
-        echo "    last_index = get_last_commit_index(file_path)" >> create_commits.py
-        echo "    new_index = create_commits(1000000, last_index)" >> create_commits.py  # Adjust the number of commits as needed
-        echo "    save_last_commit_index(file_path, new_index)" >> create_commits.py
+        echo "    current_commit_count = get_commit_count()" >> create_commits.py
+        echo "    new_index = create_commits(50000, current_commit_count)" >> create_commits.py  # Adjust the number of commits as needed
 
     - name: Run create_commits.py
       run: python create_commits.py
-
-    - name: Commit last_commit_index.txt
-      run: |
-        git add last_commit_index.txt
-        git commit -m "Update last commit index"
-        git push
 
     - name: Trigger Bulk Projects Creation workflow
       run: |
