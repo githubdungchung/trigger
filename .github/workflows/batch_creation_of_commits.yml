@@ -1,4 +1,4 @@
-name: Bulk Commit With Shell
+name: Bulk Commit With GH CLI
 
 on:
   workflow_dispatch:
@@ -14,16 +14,29 @@ jobs:
           token: ${{ secrets.PAT }}
           persist-credentials: false
 
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh
+
+    - name: Authenticate GH CLI
+      run: gh auth login --with-token < ${{ secrets.PAT }}
+
+    - name: Get commit count using GH CLI
+      id: commit_count
+      run: |
+        repo_name=${{ github.repository }}
+        total_commits=$(gh api repos/${repo_name}/commits --paginate -q '.[].sha' | wc -l)
+        echo "Total commits: $total_commits"
+        echo "::set-output name=total_commits::$total_commits"
+
     - name: Configure Git
       run: |
         git config --global user.name 'githubdungchung'
         git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
 
-    - name: Get commit count and create commits
+    - name: Create commits based on total commits
       run: |
-        # Get the current commit count
-        commit_count=$(git rev-list --count HEAD)
-        echo "Current commit count: $commit_count"
+        total_commits=${{ steps.commit_count.outputs.total_commits }}
+        echo "Starting commit creation from commit count: $total_commits"
 
         # Set the number of commits to create
         number_of_commits=1000  # Adjust this number as needed
@@ -31,9 +44,9 @@ jobs:
         # Create commits in batches
         batch_size=100
         for ((i=1; i<=number_of_commits; i++)); do
-          commit_count=$((commit_count + 1))
-          echo "Creating commit number: $commit_count"
-          git commit --allow-empty -m "Empty commit $commit_count"
+          total_commits=$((total_commits + 1))
+          echo "Creating commit number: $total_commits"
+          git commit --allow-empty -m "Empty commit $total_commits"
           if ((i % batch_size == 0)); then
             git pull --rebase
             git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
