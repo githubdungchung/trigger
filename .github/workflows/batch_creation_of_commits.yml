@@ -18,7 +18,7 @@ jobs:
       run: sudo apt-get install gh
 
     - name: Authenticate GH CLI
-      run: gh auth login --with-token < ${{ secrets.PAT }}
+      run: echo "${{ secrets.PAT }}" | gh auth login --with-token
 
     - name: Get commit count using GH CLI
       id: commit_count
