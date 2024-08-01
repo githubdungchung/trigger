@@ -31,22 +31,19 @@ jobs:
           "https://api.github.com/repos/${repo_name}/commits?per_page=1&page=$last_page" \
           | jq length)
         total_commits=$(( (last_page - 1) * 1 + total_commits ))
-        echo "Total commits: $total_commits"
         echo "::set-output name=total_commits::$total_commits"
 
     - name: Create commits based on total commits
       run: |
         total_commits=${{ steps.commit_count.outputs.total_commits }}
-        echo "Starting commit creation from commit count: $total_commits"
 
         # Set the number of commits to create
-        number_of_commits=1000  # Adjust this number as needed
+        number_of_commits=20000  # Adjust this number as needed
 
         # Create commits in batches
         batch_size=100
         for ((i=1; i<=number_of_commits; i++)); do
           total_commits=$((total_commits + 1))
-          echo "Creating commit number: $total_commits"
           git commit --allow-empty -m "Empty commit $total_commits"
           if ((i % batch_size == 0)); then
             git pull --rebase
