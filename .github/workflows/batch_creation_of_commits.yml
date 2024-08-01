@@ -2,6 +2,8 @@ name: Bulk Commit With Py
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
 
 jobs:
   create-commits:
