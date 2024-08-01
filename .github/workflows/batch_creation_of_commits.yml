@@ -59,3 +59,12 @@ jobs:
         if ((remaining_commits > 0)); then
           git pull --rebase
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+        fi
+
+    - name: Trigger Bulk Projects Creation workflow
+      run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.PAT }}" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/bulk_projects_creation.yml/dispatches \
+          -d '{"ref":"main"}'
