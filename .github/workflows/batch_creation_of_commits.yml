@@ -23,9 +23,14 @@ jobs:
       id: commit_count
       run: |
         repo_name=${{ github.repository }}
+        # Get the total number of commits using the GitHub API and handle pagination
+        last_page=$(curl -s -I -H "Authorization: token ${{ secrets.PAT }}" \
+          "https://api.github.com/repos/${repo_name}/commits?per_page=1" \
+          | grep -i 'link:' | sed -n 's/.*page=\([0-9]*\)>; rel="last".*/\1/p')
         total_commits=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
-          https://api.github.com/repos/${repo_name}/commits?per_page=1 \
-          | grep '"sha"' | wc -l)
+          "https://api.github.com/repos/${repo_name}/commits?per_page=1&page=$last_page" \
+          | jq length)
+        total_commits=$(( (last_page - 1) * 1 + total_commits ))
         echo "Total commits: $total_commits"
         echo "::set-output name=total_commits::$total_commits"
 
@@ -41,25 +46,4 @@ jobs:
         batch_size=100
         for ((i=1; i<=number_of_commits; i++)); do
           total_commits=$((total_commits + 1))
-          echo "Creating commit number: $total_commits"
-          git commit --allow-empty -m "Empty commit $total_commits"
-          if ((i % batch_size == 0)); then
-            git pull --rebase
-            git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
-          fi
-        done
-
-        # Push any remaining commits
-        remaining_commits=$((number_of_commits % batch_size))
-        if ((remaining_commits > 0)); then
-          git pull --rebase
-          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
-        fi
-
-    - name: Trigger Bulk Projects Creation workflow
-      run: |
-        curl -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: token ${{ secrets.PAT }}" \
-          https://api.github.com/repos/${{ github.repository }}/actions/workflows/bulk_projects_creation.yml/dispatches \
-          -d '{"ref":"main"}'
+          echo "Creating commit number: $total_commits
