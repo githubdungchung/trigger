@@ -24,10 +24,9 @@ jobs:
 
     - name: Create Python script
       run: |
-        echo "import os" > create_commits.py
-        echo "import subprocess" >> create_commits.py
+        echo "import subprocess" > create_commits.py
         echo "def get_commit_count():" >> create_commits.py
-        echo "    result = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], stdout=subprocess.PIPE)" >> create_commits.py
+        echo "    result = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], stdout=subprocess.PIPE, text=True)" >> create_commits.py
         echo "    return int(result.stdout.strip())" >> create_commits.py
         echo "def create_commits(number_of_commits, start_index):" >> create_commits.py
         echo "    batch_size = 100" >> create_commits.py
@@ -45,7 +44,8 @@ jobs:
         echo "    return current_index" >> create_commits.py
         echo "if __name__ == '__main__':" >> create_commits.py
         echo "    current_commit_count = get_commit_count()" >> create_commits.py
-        echo "    new_index = create_commits(50000, current_commit_count)" >> create_commits.py  # Adjust the number of commits as needed
+        echo "    print(f'Current commit count: {current_commit_count}')" >> create_commits.py
+        echo "    new_index = create_commits(200, current_commit_count)" >> create_commits.py  # Adjust the number of commits as needed
 
     - name: Run create_commits.py
       run: python create_commits.py
