@@ -2,8 +2,6 @@ name: Bulk Commit With Py
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *' # Runs every 5 minutes
 
 jobs:
   create-commits:
