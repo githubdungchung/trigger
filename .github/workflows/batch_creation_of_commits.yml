@@ -1,4 +1,4 @@
-name: Bulk Commit With Py
+name: Bulk Commit With Shell
 
 on:
   workflow_dispatch:
@@ -14,41 +14,38 @@ jobs:
           token: ${{ secrets.PAT }}
           persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-
     - name: Configure Git
       run: |
         git config --global user.name 'githubdungchung'
         git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
 
-    - name: Create Python script
+    - name: Get commit count and create commits
       run: |
-        echo "import subprocess" > create_commits.py
-        echo "def get_commit_count():" >> create_commits.py
-        echo "    result = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], stdout=subprocess.PIPE, text=True)" >> create_commits.py
-        echo "    return int(result.stdout.strip())" >> create_commits.py
-        echo "def create_commits(number_of_commits, start_index):" >> create_commits.py
-        echo "    batch_size = 100" >> create_commits.py
-        echo "    current_index = start_index" >> create_commits.py
-        echo "    for i in range(1, number_of_commits + 1):" >> create_commits.py
-        echo "        current_index += 1" >> create_commits.py
-        echo "        subprocess.run(['git', 'commit', '--allow-empty', '-m', f'Empty commit {current_index}'])" >> create_commits.py
-        echo "        if i % batch_size == 0:" >> create_commits.py
-        echo "            subprocess.run(['git', 'pull', '--rebase'])" >> create_commits.py
-        echo "            subprocess.run(['git', 'push', 'https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git', 'HEAD:main'])" >> create_commits.py
-        echo "    remaining_commits = number_of_commits % batch_size" >> create_commits.py
-        echo "    if remaining_commits > 0:" >> create_commits.py
-        echo "        subprocess.run(['git', 'pull', '--rebase'])" >> create_commits.py
-        echo "        subprocess.run(['git', 'push', 'https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git', 'HEAD:main'])" >> create_commits.py
-        echo "    return current_index" >> create_commits.py
-        echo "if __name__ == '__main__':" >> create_commits.py
-        echo "    current_commit_count = get_commit_count()" >> create_commits.py
-        echo "    print(f'Current commit count: {current_commit_count}')" >> create_commits.py
-        echo "    new_index = create_commits(200, current_commit_count)" >> create_commits.py  # Adjust the number of commits as needed
+        # Get the current commit count
+        commit_count=$(git rev-list --count HEAD)
+        echo "Current commit count: $commit_count"
 
-    - name: Run create_commits.py
-      run: python create_commits.py
+        # Set the number of commits to create
+        number_of_commits=1000  # Adjust this number as needed
+
+        # Create commits in batches
+        batch_size=100
+        for ((i=1; i<=number_of_commits; i++)); do
+          commit_count=$((commit_count + 1))
+          echo "Creating commit number: $commit_count"
+          git commit --allow-empty -m "Empty commit $commit_count"
+          if ((i % batch_size == 0)); then
+            git pull --rebase
+            git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+          fi
+        done
+
+        # Push any remaining commits
+        remaining_commits=$((number_of_commits % batch_size))
+        if ((remaining_commits > 0)); then
+          git pull --rebase
+          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+        fi
 
     - name: Trigger Bulk Projects Creation workflow
       run: |
