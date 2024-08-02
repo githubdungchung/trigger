@@ -13,12 +13,11 @@ jobs:
           token: ${{ secrets.PAT }}
           persist-credentials: false
 
-      - name: Remove all files except .github/workflows
+      - name: Remove all files except .github/workflows and .git directory
         run: |
-          # Find and remove all files and directories excluding .github and .github/workflows
-          for item in $(find . -mindepth 1 -not -path "./.github" -not -path "./.github/workflows/*"); do
-            rm -rf "$item"
-          done
+          # Find and remove all files and directories excluding .git, .github and .github/workflows
+          find . -mindepth 1 -not -path "./.git" -not -path "./.github" -not -path "./.github/workflows/*" -exec rm -rf {} +
+
           # If there are any changes, commit and push them
           if [ -n "$(git status --porcelain)" ]; then
             git config --global user.name 'githubdungchung'
@@ -26,4 +25,3 @@ jobs:
             git add .
             git commit -m "Clear repository except .github/workflows"
             git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
-          fi
