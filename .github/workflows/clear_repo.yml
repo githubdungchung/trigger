@@ -1,0 +1,27 @@
+name: Clear Repository
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          persist-credentials: false
+
+      - name: Remove all files except .github/workflows
+        run: |
+          # Find all files and directories excluding .github/workflows
+          find . -mindepth 1 -not -path "./.github" -not -path "./.github/workflows/*" -exec rm -rf {} +
+          # If there are any changes, commit and push them
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name 'githubdungchung'
+            git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+            git add .
+            git commit -m "Clear repository except .github/workflows"
+            git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+          fi
