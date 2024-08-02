@@ -17,7 +17,8 @@ jobs:
 
       - name: Remove all files except .github/workflows and .git directory
         run: |
-          find . -mindepth 1 -not -name ".git" -not -name ".github" -exec rm -rf {} +
+          shopt -s extglob
+          rm -rf !( .git| .github )
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add .
