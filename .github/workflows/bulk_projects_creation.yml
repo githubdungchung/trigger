@@ -22,18 +22,18 @@ jobs:
           FILE_COUNT=$(find . -type f | grep -v '.github/workflows' | wc -l)
           
           # Calculate the number of files to delete to keep the total number below 990
-          FILES_TO_DELETE=$((FILE_COUNT - 990 + 10)) # Adding 10 to account for the new projects
+          FILES_TO_DELETE=$((FILE_COUNT - 980)) # Keeping a buffer of 10 files for the new projects
 
           if [ $FILES_TO_DELETE -gt 0 ]; then
             # Find and delete the oldest files except those in .github/workflows
-            find . -type f | grep -v '.github/workflows' | xargs ls -tr | head -n $FILES_TO_DELETE | xargs git rm -f
+            find . -type f | grep -v '.github/workflows' | xargs ls -tr | head -n $FILES_TO_DELETE | xargs -r git rm -f
             git commit -m "Clean up old projects"
             git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
           fi
 
       - name: Create multiple projects
         run: |
-          for i in {1..2}; do
+          for i in {1..10}; do
             TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
             PROJECT_DIR="$TIMESTAMP"
             
@@ -50,17 +50,4 @@ jobs:
             git config --global user.name 'githubdungchung'
             git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
             git add .
-            git commit -m "Initialize Next.js project and install react-theme-switch-animation for $PROJECT_DIR"
-            git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
-
-            cd ..
-            sleep 1  # Ensure the next timestamp is unique
-          done
-
-      - name: Trigger Bulk Commit With Py workflow
-        run: |
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.PAT }}" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/bulk_commit_with_py.yml/dispatches \
-            -d '{"ref":"main"}'
+            git commit -m "Initialize Next.js project and install
