@@ -19,6 +19,7 @@ jobs:
         id: check_files
         run: |
           file_count=$(ls -1A | wc -l)
+          echo "Number of files: $file_count"
           echo "::set-output name=file_count::$file_count"
 
       - name: Clear repository if file count exceeds 995
@@ -43,9 +44,16 @@ jobs:
           git commit -m "Retained the latest 990 files and removed older files"
           git push origin main
       
+      - name: Generate random number of projects to create
+        id: generate_random
+        run: |
+          random_number=$(shuf -i 1-30 -n 1)
+          echo "Random number of projects to create: $random_number"
+          echo "::set-output name=random_number::$random_number"
+
       - name: Create multiple projects
         run: |
-          for i in {1..2}; do
+          for i in $(seq 1 ${{ steps.generate_random.outputs.random_number }}); do
             TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
             PROJECT_DIR="$TIMESTAMP"
             
