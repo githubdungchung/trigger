@@ -16,24 +16,37 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
 
-      - name: Clean up old files
+      - name: Check number of files and trigger cleanup if necessary
+        id: check_files
         run: |
-          # Count the total number of files excluding the .github/workflows directory
-          FILE_COUNT=$(find . -type f | grep -v '.github/workflows' | wc -l)
-          
-          # Calculate the number of files to delete to keep the total number below 990
-          FILES_TO_DELETE=$((FILE_COUNT - 980)) # Keeping a buffer of 10 files for the new projects
+          file_count=$(ls -1A | wc -l)
+          echo "::set-output name=file_count::$file_count"
 
-          if [ $FILES_TO_DELETE -gt 0 ]; then
-            # Find and delete the oldest files except those in .github/workflows
-            find . -type f | grep -v '.github/workflows' | xargs ls -tr | head -n $FILES_TO_DELETE | xargs -r git rm -f
-            git commit -m "Clean up old projects"
-            git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
-          fi
-
+      - name: Clear repository if file count exceeds 995
+        if: steps.check_files.outputs.file_count > 995
+        run: |
+          # Create a temporary directory to store recent files
+          mkdir temp
+  
+          # Move the latest 990 files to the temp directory
+          ls -tp | grep -v '/$' | head -n 990 | xargs -I {} mv {} temp
+  
+          # Remove all files except .git and .github directories
+          shopt -s extglob
+          rm -rf !( .git| .github|temp)
+  
+          # Move files back from temp to the root directory
+          mv temp/* .
+          rmdir temp
+  
+          # Add changes to git
+          git add .
+          git commit -m "Retained the latest 990 files and removed older files"
+          git push origin main
+      
       - name: Create multiple projects
         run: |
-          for i in {1..10}; do
+          for i in {1..2}; do
             TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
             PROJECT_DIR="$TIMESTAMP"
             
@@ -50,4 +63,21 @@ jobs:
             git config --global user.name 'githubdungchung'
             git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
             git add .
-            git commit -m "Initialize Next.js project and install
+            git commit -m "Initialize Next.js project and install react-theme-switch-animation for $PROJECT_DIR"
+            git push origin main
+
+            cd ..
+            sleep 1  # Ensure the next timestamp is unique
+          done
+
+  trigger-next-job:
+    needs: install-packages
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger Bulk Projects Creation workflow
+      run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.PAT }}" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/batch_creation_of_commits.yml/dispatches \
+          -d '{"ref":"main"}'
