@@ -15,8 +15,15 @@ jobs:
 
       - name: Remove all files except .github/workflows and .git directory
         run: |
-          # Find and remove all files and directories excluding .git, .github and .github/workflows
-          find . -mindepth 1 -not -path "./.git" -not -path "./.github" -not -path "./.github/workflows/*" -exec rm -rf {} +
+          # Find all items in the repository excluding .git and .github/workflows
+          items_to_delete=$(find . -mindepth 1 -not -path "./.git" -not -path "./.github" -not -path "./.github/workflows/*")
+
+          # Remove each item if it exists
+          for item in $items_to_delete; do
+            if [ -e "$item" ]; then
+              rm -rf "$item"
+            fi
+          done
 
           # If there are any changes, commit and push them
           if [ -n "$(git status --porcelain)" ]; then
