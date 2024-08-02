@@ -1,4 +1,4 @@
-name: Clean Repo
+name: Clear Repository
 
 on:
   push:
@@ -6,30 +6,31 @@ on:
       - main
 
 jobs:
-  clean_repo:
+  clear-repo:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           persist-credentials: false
 
-      - name: Remove All Files
+      - name: Remove all files except .github/workflows and .git directory
         run: |
-          git rm -rf .
-          rm -rf .*
+          # Find all items in the repository excluding .git and .github/workflows
+          items_to_delete=$(find . -mindepth 1 -not -path "./.git" -not -path "./.github" -not -path "./.github/workflows/*")
 
-      - name: Commit Changes
-        run: |
-          git config --global user.name 'githubdungchung'
-          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
-          git commit -m "Clean repo"
+          # Remove each item if it exists
+          for item in $items_to_delete; do
+            if [ -e "$item" ]; then
+              rm -rf "$item"
+            fi
+          done
 
-      - name: Push Changes
-        env:
-          GH_PAT: ${{ secrets.PAT }}
-        run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git
-          git push origin main --force
+          # If there are any changes, commit and push them
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name 'githubdungchung'
+            git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+            git add .
+            git commit -m "Clear repository except .github/workflows"
+            git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
