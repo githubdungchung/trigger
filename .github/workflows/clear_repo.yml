@@ -15,8 +15,10 @@ jobs:
 
       - name: Remove all files except .github/workflows
         run: |
-          # Find all files and directories excluding .github/workflows
-          find . -mindepth 1 -not -path "./.github" -not -path "./.github/workflows/*" -exec rm -rf {} +
+          # Find and remove all files and directories excluding .github and .github/workflows
+          for item in $(find . -mindepth 1 -not -path "./.github" -not -path "./.github/workflows/*"); do
+            rm -rf "$item"
+          done
           # If there are any changes, commit and push them
           if [ -n "$(git status --porcelain)" ]; then
             git config --global user.name 'githubdungchung'
