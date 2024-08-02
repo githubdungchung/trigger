@@ -1,7 +1,7 @@
 name: Clear Repository
 
 on:
-  workflow_dispatch:
+  workflow_dispatch
 
 jobs:
   clear-repo:
@@ -11,16 +11,30 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Configure Git
         run: |
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
 
-      - name: Remove all files except .github/workflows and .git directory
+      - name: Keep only the latest 990 files, exclude .git and .github
         run: |
+          # Create a temporary directory to store recent files
+          mkdir temp
+
+          # Move the latest 990 files to the temp directory
+          ls -tp | grep -v '/$' | head -n 990 | xargs -I {} mv {} temp
+
+          # Remove all files except .git and .github directories
           shopt -s extglob
-          rm -rf !( .git| .github )
+          rm -rf !( .git| .github|temp)
+
+          # Move files back from temp to the root directory
+          mv temp/* .
+          rmdir temp
+
+          # Add changes to git
           git add .
-          git commit -m "Removed all files except .github/workflows and .git"
+          git commit -m "Retained the latest 990 files and removed older files"
           git push origin main
