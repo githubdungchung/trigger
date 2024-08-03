@@ -15,6 +15,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
 
+      - name: Configure Git
+        run: |
+          git config --global user.name 'githubdungchung'
+          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+
+
       - name: Check number of files and trigger cleanup if necessary
         id: check_files
         run: |
