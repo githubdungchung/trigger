@@ -27,18 +27,21 @@ jobs:
         run: |
           # Create a temporary directory to store recent files
           mkdir temp
-  
+      
           # Move the latest 990 files to the temp directory
           ls -tp | grep -v '/$' | head -n 990 | xargs -I {} mv {} temp
-  
+      
           # Remove all files except .git and .github directories
           shopt -s extglob
           rm -rf !( .git| .github|temp)
-  
-          # Move files back from temp to the root directory
-          mv temp/* .
+      
+          # Check if temp directory is not empty before moving files back
+          if [ "$(ls -A temp)" ]; then
+            mv temp/* .
+          fi
+      
           rmdir temp
-  
+      
           # Add changes to git
           git add .
           git commit -m "Retained the latest 990 files and removed older files"
