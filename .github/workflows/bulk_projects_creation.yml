@@ -66,22 +66,20 @@ jobs:
             TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
             PROJECT_DIR="$TIMESTAMP"
             
-            # Create Next.js project
-            npx create-next-app@latest $PROJECT_DIR --use-npm --no-tailwind --no-eslint --no-src-dir --no-experimental-app --ts --no-import-alias
+            # Create Next.js project with the specified options
+            npx create-next-app@latest $PROJECT_DIR --ts --eslint --tailwind --no-src-dir --app --no-import-alias --use-npm
             
             cd $PROJECT_DIR
             npm install react-theme-switch-animation
             
             # Modify file to ensure changes
             echo "// Added by GitHub Actions" >> README.md
-
             # Commit and push changes
             git config --global user.name 'githubdungchung'
             git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
             git add .
             git commit -m "Initialize Next.js project and install react-theme-switch-animation for $PROJECT_DIR"
             git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
-
             cd ..
             sleep 1  # Ensure the next timestamp is unique
           done
