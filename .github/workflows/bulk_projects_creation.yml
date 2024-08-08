@@ -60,13 +60,14 @@ jobs:
           echo "Random number of projects to create: $random_number"
           echo "::set-output name=random_number::$random_number"
 
-      - name: Create multiple projects
+      - name: Create multiple projects and track number
         run: |
+          projects_created=0
           for i in $(seq 1 ${{ steps.generate_random.outputs.random_number }}); do
             TIMESTAMP=$(date +'%Y%m%d%H%M%S%N')
             PROJECT_DIR="$TIMESTAMP"
             
-            # Create Next.js project with the specified options
+            # Create Next.js project
             npx create-next-app@latest $PROJECT_DIR --ts --eslint --tailwind --no-src-dir --app --no-import-alias --use-npm
             
             cd $PROJECT_DIR
@@ -74,31 +75,32 @@ jobs:
             
             # Modify file to ensure changes
             echo "// Added by GitHub Actions" >> README.md
-            # Commit and push changes
-            git config --global user.name 'githubdungchung'
-            git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
-            git add .
-            git commit -m "Initialize Next.js project and install react-theme-switch-animation for $PROJECT_DIR"
-            git push -f https://githubdungchung:${{ secrets.PAT }}@github.com/githubdungchung/trigger.git HEAD:main
+            
+            # Move back to the main directory
             cd ..
             sleep 1  # Ensure the next timestamp is unique
+            projects_created=$((projects_created + 1))
           done
 
-      - name: Update README with Project Creation Count
+          echo "projects_created=$projects_created" >> $GITHUB_ENV
+
+      - name: Update README with project count
         run: |
-          today=$(date +%Y-%m-%d)
-          projects_created=${{ steps.generate_random.outputs.random_number }}
-          if grep -q "| $today |" README.md; then
-            # Update existing line
-            sed -i "/| $today |/{s/|[^|]*|$/| $(($projects_created + $(awk -F'|' '/| '$today' |/{print $3}' README.md))) |/}" README.md
-          else
-            # Check if the header exists and add if it does not
-            grep -q "| Date       | Number of Projects Created |" README.md || sed -i "/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Number of Projects Created |\n|------------|----------------------------|" README.md
-            # Add new date and project count
-            sed -i "/|------------|----------------------------|/a | $today | $projects_created |" README.md
+          today=$(date +'%Y-%m-%d')
+          projects_created=${{ env.projects_created }}
+          
+          # Check if the header exists, if not add it
+          if ! grep -q "| Date       | Projects Created |" README.md; then
+            sed -i '/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Projects Created |\n|------------|------------------|' README.md
           fi
+
+          # Adding project counts to README.md
+          sed -i '/|------------|------------------|/a | '$today' | '$projects_created' |' README.md
+
+          git config --global user.name 'githubdungchung'
+          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add README.md
-          git commit -m "Updated README with project creation count for $today"
+          git commit -m "Updated project creation history in README.md"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
   trigger-next-job:
