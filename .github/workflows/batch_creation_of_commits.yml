@@ -80,10 +80,28 @@ jobs:
         git commit -m "Updated commit history in README.md"
         git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
-    - name: Trigger Bulk Projects Creation workflow
+    - name: Consolidate Commit History
       run: |
-        curl -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: token ${{ secrets.PAT }}" \
-          https://api.github.com/repos/${{ github.repository }}/actions/workflows/bulk_projects_creation.yml/dispatches \
-          -d '{"ref":"main"}'
+        awk 'BEGIN{FS=OFS=" | "} 
+        /<!--START_SECTION:batch_creation_of_commits-->/ {rec=1; next} 
+        /<!--END_SECTION:batch_creation_of_commits-->/ {rec=0} 
+        rec && NF==3 {count[$2]+=$3} 
+        END {
+          print "| Date       | Total Commits |"
+          print "|------------|---------------|"
+          for (date in count) print "|", date, "|", count[date], "|"
+        }' README.md > temp.md
+        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/, /<!--END_SECTION:batch_creation_of_commits-->/c\<!--START_SECTION:batch_creation_of_commits-->' README.md
+        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/ r temp.md' README.md
+        rm temp.md
+        git add README.md
+        git commit -m "Consolidated commit history in README.md"
+        git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+
+    # - name: Trigger Bulk Projects Creation workflow
+    #   run: |
+    #     curl -X POST \
+    #       -H "Accept: application/vnd.github.v3+json" \
+    #       -H "Authorization: token ${{ secrets.PAT }}" \
+    #       https://api.github.com/repos/${{ github.repository }}/actions/workflows/bulk_projects_creation.yml/dispatches \
+    #       -d '{"ref":"main"}'
