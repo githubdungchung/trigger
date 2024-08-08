@@ -82,6 +82,7 @@ jobs:
 
     - name: Consolidate Commit History
       run: |
+        # Extract relevant section and consolidate
         awk 'BEGIN{FS=OFS=" | "} 
         /<!--START_SECTION:batch_creation_of_commits-->/ {rec=1; next} 
         /<!--END_SECTION:batch_creation_of_commits-->/ {rec=0} 
@@ -89,14 +90,22 @@ jobs:
         END {
           print "| Date       | Total Commits |"
           print "|------------|---------------|"
-          for (date in count) print "|", date, "|", count[date], "|"
-        }' README.md > temp.md
-        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/, /<!--END_SECTION:batch_creation_of_commits-->/c\<!--START_SECTION:batch_creation_of_commits-->' README.md
-        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/ r temp.md' README.md
-        rm temp.md
+          for (date in count) asorti(count, sorted_keys)
+          for (i in sorted_keys) {
+            date = sorted_keys[i]
+            print "|", date, "|", count[date], "|"
+          }
+        }' README.md > consolidated.md
+        
+        # Replace old data with new consolidated data in README.md
+        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/, /<!--END_SECTION:batch_creation_of_commits-->/d' README.md
+        sed -i '/<!--START_SECTION:batch_creation_of_commits-->/ r consolidated.md' README.md
+        rm consolidated.md
+
         git add README.md
         git commit -m "Consolidated commit history in README.md"
         git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+
 
     # - name: Trigger Bulk Projects Creation workflow
     #   run: |
