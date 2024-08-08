@@ -61,28 +61,48 @@ jobs:
     - name: Update README with Commit Count
       run: |
         today=$(date +%Y-%m-%d)
+        number_of_commits=$number_of_commits # Ensure this is passed correctly from earlier steps
         # Generate the updated section with awk
         awk -v date="$today" -v commits="$number_of_commits" '
-          BEGIN {printout=0; updated=0}
-          /<!--START_SECTION:batch_creation_of_commits-->/ {printout=1; print; next}
-          /<!--END_SECTION:batch_creation_of_commits-->/ {printout=0}
-          printout {
-            if($2 == date) {
-              $4 = $4 + commits;
-              updated=1;
+          BEGIN {
+            in_section=0; found_date=0;
+            print_header=1;
+          }
+          /<!--START_SECTION:batch_creation_of_commits-->/ {
+            print;
+            in_section=1;
+            if (print_header) {
+              print "| Date       | Total Commits |";
+              print "|------------|---------------|";
+              print_header=0;
+            }
+            next;
+          }
+          /<!--END_SECTION:batch_creation_of_commits-->/ {
+            if (!found_date && in_section) {
+              print "| " date " | " commits " |"; # Add new entry if date not found
             }
             print;
+            in_section=0;
+            next;
           }
-          !printout {print}
-          END {
-            if (!updated && printout) {
-              print "| " date " | " commits " |"
-            }
+          in_section && $2 == date {
+            $4 = $4 + commits; # Update existing entry
+            found_date=1;
+            print;
+            next;
           }
+          {print}
         ' README.md > README.tmp && mv README.tmp README.md
-        git add README.md
-        git commit -m "Updated README with commit count for $today"
-        git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+
+        # Check if there are changes to commit
+        if ! git diff --exit-code; then
+          git add README.md
+          git commit -m "Updated README with commit count for $today"
+          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+        else
+          echo "No changes to commit."
+        fi
 
     - name: Trigger Bulk Projects Creation workflow
       run: |
