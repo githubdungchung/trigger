@@ -58,13 +58,20 @@ jobs:
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
         fi
 
-    - name: Update README with project count
+    - name: Update README with Commit Count
       run: |
-        date=$(date +'%Y-%m-%d')
-        number_of_projects=${{ steps.generate_random.outputs.random_number }}
-        sed -i "/<!--START_SECTION:bulk_projects_creation-->/a| $date       | $number_of_projects |" README.md
+        today=$(date +%Y-%m-%d)
+        if grep -q "| $today |" README.md; then
+          # Update existing line
+          sed -i "/| $today |/{s/|[^|]*|$/| $(($number_of_commits + $(awk -F'|' '/| '$today' |/{print $3}' README.md))) |/}" README.md
+        else
+          # Check if the header exists and add if it does not
+          grep -q "| Date       | Total Commits |" README.md || sed -i "/<!--START_SECTION:batch_creation_of_commits-->/a | Date       | Total Commits |\n|------------|---------------|" README.md
+          # Add new date and commit count
+          sed -i "/|------------|---------------|/a | $today | $number_of_commits |" README.md
+        fi
         git add README.md
-        git commit -m "Updated project creation history in README"
+        git commit -m "Updated README with commit count for $today"
         git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
     - name: Trigger Bulk Projects Creation workflow
