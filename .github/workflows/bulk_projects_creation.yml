@@ -103,46 +103,28 @@ jobs:
           git commit -m "Updated project creation history in README.md"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
-      - name: Aggregate project counts in README
+      - name: Aggregate project count by date
         run: |
           today=$(date +'%Y-%m-%d')
           
-          # Extract the table without header and footer from README.md
-          sed -n '/<!--START_SECTION:bulk_projects_creation-->/, /<!--END_SECTION:bulk_projects_creation-->/p' README.md | sed '1d;$d' > temp_table.md
-          
-          # Check if today's date already exists in the table
-          if grep -q "$today" temp_table.md; then
-            # Create a new table with summed entries per date
-            awk -F '|' '
-              BEGIN { OFS = "|" }
-              {
-                if(NF==3) { 
-                  gsub(/ /, "", $2); gsub(/ /, "", $3);
-                  count[$2] += $3
-                }
-              }
-              END {
-                print "| Date       | Projects Created |"
-                print "|------------|------------------|"
-                for (date in count) {
-                  printf "| %s | %d |\n", date, count[date]
-                }
-              }
-            ' temp_table.md > new_table.md
-          
-            # Replace the old table in README.md
-            sed -i '/<!--START_SECTION:bulk_projects_creation-->/, /<!--END_SECTION:bulk_projects_creation-->/c\<!--START_SECTION:bulk_projects_creation-->\n' new_table.md '\n<!--END_SECTION:bulk_projects_creation-->' README.md
-          else
-            # Simply append today's date and count if not present
-            echo "| $today | $projects_created |" >> README.md
-          fi
+          # Extract lines for today's date, sum the numbers
+          today_lines=$(grep "| $today |" README.md)
+          sum=0
+          echo "$today_lines" | while read line; do
+            count=$(echo $line | cut -d '|' -f 3 | xargs)
+            sum=$(($sum + $count))
+          done
 
-          rm temp_table.md new_table.md # Clean up temporary files
+          # Remove existing lines for today's date
+          sed -i "/| $today | /d" README.md
+
+          # Reinsert the aggregated entry
+          sed -i '/|------------|------------------|/a | '$today' | '$sum' |' README.md
 
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add README.md
-          git commit -m "Aggregated project counts in README.md"
+          git commit -m "Aggregated project creation counts for $today in README.md"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
   trigger-next-job:
