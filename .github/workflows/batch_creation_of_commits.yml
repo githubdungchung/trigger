@@ -38,12 +38,14 @@ jobs:
         total_commits=${{ steps.commit_count.outputs.total_commits }}
 
         # Set the number of commits to create
-        number_of_commits=10  # Adjust this number as needed
+        number_of_commits=20000  # Adjust this number as needed
 
         # Create commits in batches
         batch_size=100
+        actual_commits_created=0
         for ((i=1; i<=number_of_commits; i++)); do
           total_commits=$((total_commits + 1))
+          actual_commits_created=$((actual_commits_created + 1))
           git commit --allow-empty -m "Empty commit $total_commits"
           if ((i % batch_size == 0)); then
             git pull --rebase
@@ -54,14 +56,17 @@ jobs:
         # Push any remaining commits
         remaining_commits=$((number_of_commits % batch_size))
         if ((remaining_commits > 0)); then
+          actual_commits_created=$((actual_commits_created + remaining_commits))
           git pull --rebase
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
         fi
 
+        echo "actual_commits_created=$actual_commits_created" >> $GITHUB_ENV
+
     - name: Update README with commit count
       run: |
         today=$(date +'%Y-%m-%d')
-        number_of_commits=${{ steps.commit_count.outputs.total_commits }}
+        actual_commits_created=${{ env.actual_commits_created }}
         
         # Check if the header exists, if not add it
         if ! grep -q "| Date       | Total Commits |" README.md; then
@@ -69,7 +74,7 @@ jobs:
         fi
 
         # Adding commit counts to README.md
-        sed -i '/|------------|---------------|/a | '$today' | '$number_of_commits' |' README.md
+        sed -i '/|------------|---------------|/a | '$today' | '$actual_commits_created' |' README.md
 
         git add README.md
         git commit -m "Updated commit history in README.md"
