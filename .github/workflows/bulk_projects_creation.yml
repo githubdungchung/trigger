@@ -84,26 +84,7 @@ jobs:
 
           echo "projects_created=$projects_created" >> $GITHUB_ENV
 
-      # - name: Update README with project count
-      #   run: |
-      #     today=$(date +'%Y-%m-%d')
-      #     projects_created=${{ env.projects_created }}
-          
-      #     # Check if the header exists, if not add it
-      #     if ! grep -q "| Date       | Projects Created |" README.md; then
-      #       sed -i '/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Projects Created |\n|------------|------------------|' README.md
-      #     fi
-
-      #     # Adding project counts to README.md
-      #     sed -i '/|------------|------------------|/a | '$today' | '$projects_created' |' README.md
-
-      #     git config --global user.name 'githubdungchung'
-      #     git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
-      #     git add README.md
-      #     git commit -m "Updated project creation history in README.md"
-      #     git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
-
-      - name: Update and consolidate README with project count
+      - name: Update README with project count
         run: |
           today=$(date +'%Y-%m-%d')
           projects_created=${{ env.projects_created }}
@@ -116,17 +97,38 @@ jobs:
           # Adding project counts to README.md
           sed -i '/|------------|------------------|/a | '$today' | '$projects_created' |' README.md
 
-          # Summing projects for the same date
-          new_content=$(cat README.md | grep -v '|------------|------------------|')
-          echo "$new_content" > README.md
-          echo "|------------|------------------|" >> README.md
-          cat README.md | grep "| $today |" | cut -d '|' -f 3 | paste -sd+ - | bc | xargs -I {} echo "| $today | {} |" >> README.md
-
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add README.md
-          git commit -m "Updated and consolidated project creation history in README.md"
+          git commit -m "Updated project creation history in README.md"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+
+      - name: Summarize projects for the same date
+        run: |
+          today=$(date +'%Y-%m-%d')
+          # Extract lines for today's date, sum them up, and rebuild the section for today
+          new_count=$(grep "$today" README.md | cut -d'|' -f3 | tr -d ' ' | paste -sd+ - | bc)
+          temp_file=$(mktemp)
+          
+          # Write the header to a temporary file
+          echo "| Date       | Projects Created |" > $temp_file
+          echo "|------------|------------------|" >> $temp_file
+          
+          # Add the new summarized entry
+          echo "| $today | $new_count |" >> $temp_file
+          
+          # Now handle other dates: remove entries for today, and append other dates to temp file
+          grep -v "$today" README.md | grep -v "Projects Created" | grep -v "------------" >> $temp_file
+          
+          # Replace the old README with the new one
+          mv $temp_file README.md
+          
+          git config --global user.name 'githubdungchung'
+          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+          git add README.md
+          git commit -m "Summarized project creation counts for $today"
+          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+
 
   trigger-next-job:
     needs: install-packages
