@@ -84,40 +84,40 @@ jobs:
 
           echo "projects_created=$projects_created" >> $GITHUB_ENV
 
-      - name: Update README with project count
-        run: |
-          today=$(date +'%Y-%m-%d')
-          projects_created=${{ env.projects_created }}
+      # - name: Update README with project count
+      #   run: |
+      #     today=$(date +'%Y-%m-%d')
+      #     projects_created=${{ env.projects_created }}
           
-          # Check if the header exists, if not add it
-          if ! grep -q "| Date       | Projects Created |" README.md; then
-            sed -i '/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Projects Created |\n|------------|------------------|' README.md
-          fi
+      #     # Check if the header exists, if not add it
+      #     if ! grep -q "| Date       | Projects Created |" README.md; then
+      #       sed -i '/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Projects Created |\n|------------|------------------|' README.md
+      #     fi
 
-          # Adding project counts to README.md
-          sed -i '/|------------|------------------|/a | '$today' | '$projects_created' |' README.md
+      #     # Adding project counts to README.md
+      #     sed -i '/|------------|------------------|/a | '$today' | '$projects_created' |' README.md
 
-          git config --global user.name 'githubdungchung'
-          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
-          git add README.md
-          git commit -m "Updated project creation history in README.md"
-          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+      #     git config --global user.name 'githubdungchung'
+      #     git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+      #     git add README.md
+      #     git commit -m "Updated project creation history in README.md"
+      #     git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
-      - name: Combine same date entries in README
-        run: |
-          today=$(date +'%Y-%m-%d')
-          # Extract current entries for today, sum them, and then replace them
-          new_count=$(awk -v date="$today" 'BEGIN{sum=0} $2==date {sum+=$4} END{print sum}' README.md)
-          # Remove existing entries for today
-          sed -i "/| $today | /d" README.md
-          # Add the new combined entry
-          sed -i "/|------------|------------------|/a | $today | $new_count |" README.md
+      # - name: Combine same date entries in README
+      #   run: |
+      #     today=$(date +'%Y-%m-%d')
+      #     # Extract current entries for today, sum them, and then replace them
+      #     new_count=$(awk -v date="$today" 'BEGIN{sum=0} $2==date {sum+=$4} END{print sum}' README.md)
+      #     # Remove existing entries for today
+      #     sed -i "/| $today | /d" README.md
+      #     # Add the new combined entry
+      #     sed -i "/|------------|------------------|/a | $today | $new_count |" README.md
 
-          git config --global user.name 'githubdungchung'
-          git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
-          git add README.md
-          git commit -m "Consolidated project creation entries for $today"
-          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
+      #     git config --global user.name 'githubdungchung'
+      #     git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
+      #     git add README.md
+      #     git commit -m "Consolidated project creation entries for $today"
+      #     git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
 
   trigger-next-job:
