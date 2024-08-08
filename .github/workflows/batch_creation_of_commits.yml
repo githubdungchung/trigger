@@ -38,7 +38,7 @@ jobs:
         total_commits=${{ steps.commit_count.outputs.total_commits }}
 
         # Set the number of commits to create
-        number_of_commits=20000  # Adjust this number as needed
+        number_of_commits=10  # Adjust this number as needed
 
         # Create commits in batches
         batch_size=100
@@ -61,15 +61,25 @@ jobs:
     - name: Update README with Commit Count
       run: |
         today=$(date +%Y-%m-%d)
-        if grep -q "| $today |" README.md; then
-          # Update existing line
-          sed -i "/| $today |/{s/|[^|]*|$/| $(($number_of_commits + $(awk -F'|' '/| '$today' |/{print $3}' README.md))) |/}" README.md
-        else
-          # Check if the header exists and add if it does not
-          grep -q "| Date       | Total Commits |" README.md || sed -i "/<!--START_SECTION:batch_creation_of_commits-->/a | Date       | Total Commits |\n|------------|---------------|" README.md
-          # Add new date and commit count
-          sed -i "/|------------|---------------|/a | $today | $number_of_commits |" README.md
-        fi
+        # Generate the updated section with awk
+        awk -v date="$today" -v commits="$number_of_commits" '
+          BEGIN {printout=0; updated=0}
+          /<!--START_SECTION:batch_creation_of_commits-->/ {printout=1; print; next}
+          /<!--END_SECTION:batch_creation_of_commits-->/ {printout=0}
+          printout {
+            if($2 == date) {
+              $4 = $4 + commits;
+              updated=1;
+            }
+            print;
+          }
+          !printout {print}
+          END {
+            if (!updated && printout) {
+              print "| " date " | " commits " |"
+            }
+          }
+        ' README.md > README.tmp && mv README.tmp README.md
         git add README.md
         git commit -m "Updated README with commit count for $today"
         git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
