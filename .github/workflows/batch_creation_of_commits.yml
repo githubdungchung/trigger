@@ -64,7 +64,7 @@ jobs:
         sed -i "/<!--START_SECTION:batch_creation_of_commits-->/a| $date       | $number_of_commits |" README.md
         git add README.md
         git commit -m "Updated commit history in README"
-        git push origin main
+        git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
     - name: Trigger Bulk Projects Creation workflow
       run: |
