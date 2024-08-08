@@ -103,30 +103,20 @@ jobs:
           git commit -m "Updated project creation history in README.md"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
-      - name: Summarize projects for the same date
+      - name: Combine same date entries in README
         run: |
           today=$(date +'%Y-%m-%d')
-          # Extract lines for today's date, sum them up, and rebuild the section for today
-          new_count=$(grep "$today" README.md | cut -d'|' -f3 | tr -d ' ' | paste -sd+ - | bc)
-          temp_file=$(mktemp)
-          
-          # Write the header to a temporary file
-          echo "| Date       | Projects Created |" > $temp_file
-          echo "|------------|------------------|" >> $temp_file
-          
-          # Add the new summarized entry
-          echo "| $today | $new_count |" >> $temp_file
-          
-          # Now handle other dates: remove entries for today, and append other dates to temp file
-          grep -v "$today" README.md | grep -v "Projects Created" | grep -v "------------" >> $temp_file
-          
-          # Replace the old README with the new one
-          mv $temp_file README.md
-          
+          # Extract current entries for today, sum them, and then replace them
+          new_count=$(awk -v date="$today" 'BEGIN{sum=0} $2==date {sum+=$4} END{print sum}' README.md)
+          # Remove existing entries for today
+          sed -i "/| $today | /d" README.md
+          # Add the new combined entry
+          sed -i "/|------------|------------------|/a | $today | $new_count |" README.md
+
           git config --global user.name 'githubdungchung'
           git config --global user.email '165872053+githubdungchung@users.noreply.github.com'
           git add README.md
-          git commit -m "Summarized project creation counts for $today"
+          git commit -m "Consolidated project creation entries for $today"
           git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
 
