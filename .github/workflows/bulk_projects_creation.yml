@@ -84,6 +84,15 @@ jobs:
             sleep 1  # Ensure the next timestamp is unique
           done
 
+      - name: Update README with project count
+        run: |
+          date=$(date +'%Y-%m-%d')
+          number_of_projects=${{ steps.generate_random.outputs.random_number }}
+          sed -i "/<!--START_SECTION:bulk_projects_creation-->/a| $date       | $number_of_projects |" README.md
+          git add README.md
+          git commit -m "Updated project creation history in README"
+          git push origin main
+
   trigger-next-job:
     needs: install-packages
     runs-on: ubuntu-latest
