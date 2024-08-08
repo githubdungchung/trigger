@@ -4,27 +4,12 @@ Welcome to the project activity log. Here you will find detailed records of comm
 
 ## Commits History
 <!--START_SECTION:batch_creation_of_commits-->
-| Date       | Total Commits |
-| Date       | Total Commits |
-| Date       | Total Commits |
-| Date       | Total Commits |
-|------------|---------------|
-|------------|---------------|
-|------------|---------------|
-|------------|---------------|
 
-
-
-
-| 2024-08-08 | 0 |
 <!--END_SECTION:batch_creation_of_commits-->
 
 ## Projects Creation History
 
 <!--START_SECTION:bulk_projects_creation-->
-| Date       | Number of Projects Created |
-|------------|----------------------------|
-| 2024-08-08 | 26 |
 
 <!--END_SECTION:bulk_projects_creation-->
 
