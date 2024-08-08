@@ -84,14 +84,22 @@ jobs:
             sleep 1  # Ensure the next timestamp is unique
           done
 
-      - name: Update README with project count
+      - name: Update README with Project Creation Count
         run: |
-          date=$(date +'%Y-%m-%d')
-          number_of_projects=${{ steps.generate_random.outputs.random_number }}
-          sed -i "/<!--START_SECTION:bulk_projects_creation-->/a| $date       | $number_of_projects |" README.md
+          today=$(date +%Y-%m-%d)
+          projects_created=${{ steps.generate_random.outputs.random_number }}
+          if grep -q "| $today |" README.md; then
+            # Update existing line
+            sed -i "/| $today |/{s/|[^|]*|$/| $(($projects_created + $(awk -F'|' '/| '$today' |/{print $3}' README.md))) |/}" README.md
+          else
+            # Check if the header exists and add if it does not
+            grep -q "| Date       | Number of Projects Created |" README.md || sed -i "/<!--START_SECTION:bulk_projects_creation-->/a | Date       | Number of Projects Created |\n|------------|----------------------------|" README.md
+            # Add new date and project count
+            sed -i "/|------------|----------------------------|/a | $today | $projects_created |" README.md
+          fi
           git add README.md
-          git commit -m "Updated project creation history in README"
-          git push origin main
+          git commit -m "Updated README with project creation count for $today"
+          git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:main
 
   trigger-next-job:
     needs: install-packages
