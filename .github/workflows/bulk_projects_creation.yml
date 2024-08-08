@@ -39,7 +39,7 @@ jobs:
       
           # Remove all files except .git and .github directories
           shopt -s extglob
-          rm -rf !( .git| .github|temp)
+          rm -rf !( .git| .github|temp|README.md)
       
           # Check if temp directory is not empty before moving files back
           if [ "$(ls -A temp)" ]; then
