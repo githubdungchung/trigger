@@ -61,21 +61,16 @@ jobs:
     - name: Update README with Commit Count
       run: |
         today=$(date +%Y-%m-%d)
-        number_of_commits=$number_of_commits # Ensure this is passed correctly from earlier steps
+        # Ensure this is passed correctly from earlier steps
+        number_of_commits=$number_of_commits
         # Generate the updated section with awk
         awk -v date="$today" -v commits="$number_of_commits" '
           BEGIN {
             in_section=0; found_date=0;
-            print_header=1;
           }
           /<!--START_SECTION:batch_creation_of_commits-->/ {
             print;
             in_section=1;
-            if (print_header) {
-              print "| Date       | Total Commits |";
-              print "|------------|---------------|";
-              print_header=0;
-            }
             next;
           }
           /<!--END_SECTION:batch_creation_of_commits-->/ {
@@ -86,11 +81,15 @@ jobs:
             in_section=0;
             next;
           }
-          in_section && $2 == date {
-            $4 = $4 + commits; # Update existing entry
-            found_date=1;
+          in_section {
+            if ($2 == date) {
+              # Update existing entry
+              $4 = $4 + commits;
+              found_date=1;
+              print "| " $2 " | " $4 " |"; # Ensure formatting is correct
+              next;
+            }
             print;
-            next;
           }
           {print}
         ' README.md > README.tmp && mv README.tmp README.md
