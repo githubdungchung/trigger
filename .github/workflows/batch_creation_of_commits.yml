@@ -38,7 +38,7 @@ jobs:
         total_commits=${{ steps.commit_count.outputs.total_commits }}
 
         # Set the number of commits to create
-        number_of_commits=2000  # Adjust this number as needed
+        number_of_commits=20000  # Adjust this number as needed
 
         # Create commits in batches
         batch_size=100
